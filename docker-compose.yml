@@ -1,0 +1,6 @@
+services:
+  thinq-bridge:
+    build: .
+    container_name: thinq-bridge
+    restart: unless-stopped
+    env_file: .env
