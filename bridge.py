@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import signal
+import time
 import uuid
 
 import aiohttp
@@ -16,6 +17,9 @@ import paho.mqtt.client as mqtt
 from thinqconnect.thinq_api import ThinQApi, ThinQAPIException
 
 log = logging.getLogger("thinq-bridge")
+
+# Touched after every successful poll; used by the container healthcheck.
+HEALTH_FILE = "/tmp/healthy"
 
 TOKEN = os.environ["THINQ_PAT"]
 COUNTRY = os.environ.get("THINQ_COUNTRY", "DE")
@@ -97,6 +101,8 @@ async def poll_once(api: ThinQApi, client: mqtt.Client) -> None:
             )
             client.publish(f"{PREFIX}/state/{device_id}", json.dumps(state), retain=True)
             log.info("Published state of %s (%s)", info.get("alias"), device_id)
+        with open(HEALTH_FILE, "w") as fh:
+            fh.write(str(time.time()))
     except ThinQAPIException as exc:
         log.error("ThinQ API error: %s", exc)
     except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
