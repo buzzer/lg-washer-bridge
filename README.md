@@ -2,14 +2,14 @@
 
 Bindet den LG-Waschtrockner (ThinQ Connect API, cloudbasiert) an MQTT an.
 
-## Topics (Prefix `lg`)
+## Topics (Prefix `washer`)
 
 | Topic | Inhalt |
 |---|---|
-| `lg/bridge/status` | `online` / `offline` (Last Will) |
-| `lg/<deviceId>/info` | Alias, Typ, Modell (retained) |
-| `lg/<deviceId>/state` | Gerätestatus als JSON (retained), Abfrage alle 60 s |
-| `lg/<deviceId>/set` | JSON-Befehl, wird an die ThinQ-Control-API weitergereicht |
+| `washer/status` | `online` / `offline` (Last Will) |
+| `washer/info/<deviceId>` | Alias, Typ, Modell (retained) |
+| `washer/state/<deviceId>` | Gerätestatus als JSON (retained), Abfrage alle 60 s |
+| `washer/set/<deviceId>` | JSON-Befehl, wird an die ThinQ-Control-API weitergereicht |
 
 ## Installation (Raspberry Pi)
 

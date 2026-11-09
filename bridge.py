@@ -2,7 +2,7 @@
 
 Polls all devices of the LG account via the official ThinQ Connect API and
 publishes their state as retained JSON to MQTT. Commands can be sent as JSON
-to ``<prefix>/<device_id>/set`` and are forwarded to the control endpoint.
+to ``<prefix>/set/<device_id>`` and are forwarded to the control endpoint.
 """
 import asyncio
 import json
@@ -24,7 +24,7 @@ MQTT_HOST = os.environ.get("MQTT_HOST", "localhost")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_USER = os.environ.get("MQTT_USER")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD")
-PREFIX = os.environ.get("MQTT_PREFIX", "lg").rstrip("/")
+PREFIX = os.environ.get("MQTT_PREFIX", "washer").rstrip("/")
 # Stable client id so LG does not see a new client on every restart.
 CLIENT_ID = os.environ.get(
     "THINQ_CLIENT_ID", str(uuid.uuid5(uuid.NAMESPACE_DNS, "waschtrockner-bridge"))
@@ -40,18 +40,18 @@ async def main() -> None:
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     if MQTT_USER:
         client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
-    client.will_set(f"{PREFIX}/bridge/status", "offline", retain=True)
+    client.will_set(f"{PREFIX}/status", "offline", retain=True)
 
     async with aiohttp.ClientSession() as session:
         api = ThinQApi(session, TOKEN, COUNTRY, CLIENT_ID)
 
         def on_connect(c, _u, _f, rc, _p):
             log.info("MQTT connected: %s", rc)
-            c.publish(f"{PREFIX}/bridge/status", "online", retain=True)
-            c.subscribe(f"{PREFIX}/+/set")
+            c.publish(f"{PREFIX}/status", "online", retain=True)
+            c.subscribe(f"{PREFIX}/set/+")
 
         def on_message(_c, _u, msg):
-            device_id = msg.topic.split("/")[-2]
+            device_id = msg.topic.split("/")[-1]
             try:
                 payload = json.loads(msg.payload)
             except ValueError:
@@ -72,7 +72,7 @@ async def main() -> None:
                 except asyncio.TimeoutError:
                     pass
         finally:
-            client.publish(f"{PREFIX}/bridge/status", "offline", retain=True).wait_for_publish(5)
+            client.publish(f"{PREFIX}/status", "offline", retain=True).wait_for_publish(5)
             client.loop_stop()
             client.disconnect()
 
@@ -90,12 +90,12 @@ async def poll_once(api: ThinQApi, client: mqtt.Client) -> None:
                 log.warning("Skipping %s (%s): %s", info.get("alias"), device_id, exc)
                 continue
             client.publish(
-                f"{PREFIX}/{device_id}/info",
+                f"{PREFIX}/info/{device_id}",
                 json.dumps({"alias": info.get("alias"), "type": info.get("deviceType"),
                             "model": info.get("modelName")}),
                 retain=True,
             )
-            client.publish(f"{PREFIX}/{device_id}/state", json.dumps(state), retain=True)
+            client.publish(f"{PREFIX}/state/{device_id}", json.dumps(state), retain=True)
             log.info("Published state of %s (%s)", info.get("alias"), device_id)
     except ThinQAPIException as exc:
         log.error("ThinQ API error: %s", exc)
