@@ -73,12 +73,17 @@ async def main() -> None:
                 await poll_once(api, client)
                 try:
                     await asyncio.wait_for(stop.wait(), POLL_INTERVAL)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass
         finally:
             client.publish(f"{PREFIX}/status", "offline", retain=True).wait_for_publish(5)
             client.loop_stop()
             client.disconnect()
+
+
+def touch_health_file() -> None:
+    with open(HEALTH_FILE, "w") as fh:
+        fh.write(str(time.time()))
 
 
 async def poll_once(api: ThinQApi, client: mqtt.Client) -> None:
@@ -101,11 +106,10 @@ async def poll_once(api: ThinQApi, client: mqtt.Client) -> None:
             )
             client.publish(f"{PREFIX}/state/{device_id}", json.dumps(state), retain=True)
             log.info("Published state of %s (%s)", info.get("alias"), device_id)
-        with open(HEALTH_FILE, "w") as fh:
-            fh.write(str(time.time()))
+        touch_health_file()
     except ThinQAPIException as exc:
         log.error("ThinQ API error: %s", exc)
-    except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
+    except (aiohttp.ClientError, TimeoutError) as exc:
         log.error("Network error: %s", exc)
 
 
@@ -113,7 +117,7 @@ async def send_command(api: ThinQApi, device_id: str, payload: dict) -> None:
     try:
         await api.async_post_device_control(device_id, payload)
         log.info("Command sent to %s: %s", device_id, payload)
-    except Exception as exc:  # keep the bridge alive on any command failure
+    except Exception as exc:  # noqa: BLE001 - keep the bridge alive on any command failure
         log.error("Command for %s failed: %s", device_id, exc)
 
 
