@@ -74,3 +74,21 @@ Use an `mqtt in` node on `washer/state/#` and read `msg.payload[0].runState.curr
 - Stale devices that are still listed in the LG account
   (`ALREADY_DEVICE_DELETED`) are skipped with a warning.
 - The token lives only in `.env`, which is git-ignored. Never commit it.
+
+## Security
+
+- Anyone who can publish to `washer/set/<deviceId>` can control the appliance.
+  The default configuration assumes a trusted broker; for anything else
+  enable authentication (`MQTT_USER` / `MQTT_PASSWORD`) and topic ACLs on the
+  broker, and do not expose it to the internet.
+- The container runs as an unprivileged user.
+
+## Disclaimer
+
+This is an unofficial project and is not affiliated with or endorsed by LG
+Electronics. LG and ThinQ are trademarks of LG Electronics. Use at your own
+risk (see [LICENSE](LICENSE)).
+
+## License
+
+[MIT](LICENSE)
