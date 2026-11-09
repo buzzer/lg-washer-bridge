@@ -33,7 +33,7 @@ The device IP is not needed. The appliance must be set up in the LG ThinQ app.
 | `THINQ_PAT` | – (required) | Personal access token |
 | `THINQ_COUNTRY` | `DE` | Country code of the LG account (selects API region) |
 | `POLL_INTERVAL` | `60` | Seconds between polls |
-| `MQTT_HOST` / `MQTT_PORT` | – / `1883` | Broker |
+| `MQTT_HOST` / `MQTT_PORT` | `localhost` / `1883` | Broker |
 | `MQTT_USER` / `MQTT_PASSWORD` | unset | Optional broker credentials |
 | `MQTT_PREFIX` | `washer` | Topic prefix |
 | `THINQ_CLIENT_ID` | derived, stable | Client id sent to LG |
